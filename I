@@ -1,0 +1,107 @@
+local Player = game.Players.LocalPlayer
+local Mouse = Player:GetMouse()
+local RunService = game:GetService("RunService")
+
+-- 1. สร้าง Smartphone UI (มีปุ่มเปิด/ปิด)
+local ScreenGui = Instance.new("ScreenGui", Player.PlayerGui)
+local PhoneFrame = Instance.new("Frame", ScreenGui)
+PhoneFrame.Size = UDim2.new(0, 200, 0, 350)
+PhoneFrame.Position = UDim2.new(0.8, 0, 0.3, 0)
+PhoneFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+PhoneFrame.BorderSizePixel = 2
+PhoneFrame.Visible = false -- เริ่มต้นปิดไว้
+
+local Title = Instance.new("TextLabel", PhoneFrame)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "MEDIC PHONE"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+
+-- ปุ่มเปิด/ปิด UI
+local OpenBtn = Instance.new("TextButton", ScreenGui)
+OpenBtn.Size = UDim2.new(0, 60, 0, 60)
+OpenBtn.Position = UDim2.new(0.9, 0, 0.8, 0)
+OpenBtn.Text = "📱"
+OpenBtn.TextSize = 30
+OpenBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+OpenBtn.TextColor3 = Color3.new(1, 1, 1)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    PhoneFrame.Visible = not PhoneFrame.Visible
+end)
+
+-- 2. ระบบอาวุธ (ปืนฉีดเข็ม & ปืนฮีล)
+local Charge = 0
+
+-- ปืนฉีดเข็ม (Syringe Gun) - ยิงเข็มสมจริง
+local SyringeGun = Instance.new("Tool", Player.Backpack)
+SyringeGun.Name = "Real Syringe Gun"
+local SHandle = Instance.new("Part", SyringeGun); SHandle.Name = "Handle"; SHandle.Size = Vector3.new(1, 1.2, 2); SHandle.Color = Color3.new(0.8, 0.8, 0.8)
+
+SyringeGun.Activated:Connect(function()
+    local Needle = Instance.new("Part", game.Workspace)
+    Needle.Size = Vector3.new(0.2, 0.2, 1)
+    Needle.Color = Color3.new(0.5, 0.5, 0.5)
+    Needle.CFrame = SHandle.CFrame * CFrame.new(0, 0, -2)
+    Needle.Velocity = Mouse.Hit.lookVector * 150
+    Needle.CanCollide = false
+    
+    Needle.Touched:Connect(function(hit)
+        if hit.Parent:FindFirstChild("Humanoid") then
+            local hum = hit.Parent.Humanoid
+            if game.Players:GetPlayerFromCharacter(hit.Parent) then
+                hum.Health += 10 -- ยิงโดนเพื่อน = ฮีล
+            else
+                hum.Health -= 15 -- ยิงโดน NPC/ศัตรู = ดาเมจ
+            end
+            Needle:Destroy()
+        end
+    end)
+    game.Debris:AddItem(Needle, 3)
+end)
+
+-- 3. ระบบ Super Heal (ในโทรศัพท์)
+local SuperHealBtn = Instance.new("TextButton", PhoneFrame)
+SuperHealBtn.Size = UDim2.new(0.8, 0, 0, 50)
+SuperHealBtn.Position = UDim2.new(0.1, 0, 0.2, 0)
+SuperHealBtn.Text = "SUPER HEAL: OFF"
+SuperHealBtn.BackgroundColor3 = Color3.new(0.5, 0, 0)
+
+local HealingActive = false
+SuperHealBtn.MouseButton1Click:Connect(function()
+    HealingActive = not HealingActive
+    if HealingActive then
+        SuperHealBtn.Text = "SUPER HEAL: ON"
+        SuperHealBtn.BackgroundColor3 = Color3.new(0, 0.7, 0)
+    else
+        SuperHealBtn.Text = "SUPER HEAL: OFF"
+        SuperHealBtn.BackgroundColor3 = Color3.new(0.5, 0, 0)
+    end
+end)
+
+-- 4. ลำแสงฮีลแบบขยับได้ (Neon Beam)
+local Beam = Instance.new("Beam", SHandle)
+local Att0 = Instance.new("Attachment", SHandle)
+local Att1 = Instance.new("Attachment")
+Beam.Attachment0 = Att0
+Beam.Width0 = 0.4; Beam.Width1 = 0.4
+Beam.Color = ColorSequence.new(Color3.new(0, 1, 1)) -- แสงสีฟ้า Neon
+Beam.Texture = "rbxassetid://40682610" -- ลายสายฟ้าขยับได้
+Beam.TextureSpeed = 2
+Beam.Enabled = false
+
+RunService.RenderStepped:Connect(function()
+    if HealingActive then
+        local targetChar = Mouse.Target and Mouse.Target.Parent
+        if targetChar and targetChar:FindFirstChild("Humanoid") then
+            Att1.Parent = targetChar.HumanoidRootPart
+            Beam.Attachment1 = Att1
+            Beam.Enabled = true
+            targetChar.Humanoid.Health += 1 -- แรงกว่าเดิม (Super Heal)
+        else
+            Beam.Enabled = false
+        end
+    else
+        Beam.Enabled = false
+    end
+end)

@@ -1,0 +1,66 @@
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+
+-- 1. สร้าง UI สำหรับพิมพ์ชื่อคนที่จะปลอมตัว
+local ScreenGui = Instance.new("ScreenGui", Player.PlayerGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 300, 0, 100)
+MainFrame.Position = UDim2.new(0.5, -150, 0.05, 0) -- ไว้ด้านบนตามสไตล์คุณ
+MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MainFrame.BorderSizePixel = 2
+
+local TextBox = Instance.new("TextBox", MainFrame)
+TextBox.Size = UDim2.new(0.9, 0, 0.4, 0)
+TextBox.Position = UDim2.new(0.05, 0, 0.1, 0)
+TextBox.PlaceholderText = "พิมพ์ชื่อคนที่จะปลอมตัว..."
+TextBox.Text = ""
+TextBox.BackgroundColor3 = Color3.new(1, 1, 1)
+
+local DisguiseBtn = Instance.new("TextButton", MainFrame)
+DisguiseBtn.Size = UDim2.new(0.9, 0, 0.4, 0)
+DisguiseBtn.Position = UDim2.new(0.05, 0, 0.55, 0)
+DisguiseBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+DisguiseBtn.TextColor3 = Color3.new(1, 1, 1)
+DisguiseBtn.Text = "DISGUISE (ปลอมตัว!)"
+
+-- 2. ฟังก์ชันการปลอมตัว (Morph)
+local function Morph(targetName)
+    local targetPlayer = nil
+    -- ค้นหาผู้เล่นจากชื่อที่พิมพ์ (พิมพ์แค่ชื่อนำหน้าก็ได้)
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if string.sub(string.lower(p.Name), 1, string.len(targetName)) == string.lower(targetName) then
+            targetPlayer = p
+            break
+        end
+    end
+
+    if targetPlayer and targetPlayer.Character then
+        -- ลบร่างเดิม (เสื้อผ้า, หมวก) ของเราออก
+        for _, v in pairs(Character:GetChildren()) do
+            if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("CharacterMesh") or v:IsA("BodyColors") then
+                v:Destroy()
+            end
+        end
+
+        -- ก๊อปปี้ของจากร่างเป้าหมายมาใส่เรา
+        for _, v in pairs(targetPlayer.Character:GetChildren()) do
+            if v:IsA("Accessory") then
+                local clone = v:Clone()
+                clone.Parent = Character
+            elseif v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") then
+                local clone = v:Clone()
+                clone.Parent = Character
+            end
+        end
+        print("ปลอมตัวเป็น " .. targetPlayer.Name .. " สำเร็จ!")
+    else
+        print("ไม่พบผู้เล่นคนนี้")
+    end
+end
+
+-- 3. เชื่อมต่อปุ่ม
+DisguiseBtn.MouseButton1Click:Connect(function()
+    if TextBox.Text ~= "" then
+        Morph(TextBox.Text)
+    end
+end)

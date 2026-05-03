@@ -1,0 +1,81 @@
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+
+-- 1. สร้าง UI เมนูรายชื่อคน
+local ScreenGui = Instance.new("ScreenGui", Player.PlayerGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 250, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -125, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Visible = false
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "SELECT DISGUISE"
+Title.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+Title.TextColor3 = Color3.new(1, 1, 1)
+
+local ScrollingFrame = Instance.new("ScrollingFrame", MainFrame)
+ScrollingFrame.Size = UDim2.new(1, 0, 1, -40)
+ScrollingFrame.Position = UDim2.new(0, 0, 0, 40)
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 5, 0)
+ScrollingFrame.ScrollBarThickness = 8
+
+-- ปุ่มเปิด/ปิดเมนู (สี่เหลี่ยมแนวนอนด้านบน)
+local ToggleBtn = Instance.new("TextButton", ScreenGui)
+ToggleBtn.Size = UDim2.new(0, 200, 0, 50)
+ToggleBtn.Position = UDim2.new(0.5, -100, 0.02, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 0)
+ToggleBtn.Text = "OPEN SPY MENU"
+ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    if MainFrame.Visible then
+        -- รีเฟรชรายชื่อคนในแมพ
+        for _, v in pairs(ScrollingFrame:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+        local offset = 0
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= Player then
+                local pBtn = Instance.new("TextButton", ScrollingFrame)
+                pBtn.Size = UDim2.new(0.9, 0, 0, 40)
+                pBtn.Position = UDim2.new(0.05, 0, 0, offset)
+                pBtn.Text = p.Name
+                pBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                pBtn.TextColor3 = Color3.new(1, 1, 1)
+                
+                pBtn.MouseButton1Click:Connect(function()
+                    DisguiseAs(p)
+                end)
+                offset = offset + 45
+            end
+        end
+    end
+end)
+
+-- 2. ฟังก์ชันแปลงร่าง + เอฟเฟกต์ควัน
+function DisguiseAs(targetPlayer)
+    if targetPlayer and targetPlayer.Character then
+        -- สร้างควันตอนแปลงร่าง
+        local p = Instance.new("Part", workspace)
+        p.Anchored = true; p.CanCollide = false; p.Transparency = 1
+        p.Position = Character.HumanoidRootPart.Position
+        local smoke = Instance.new("Smoke", p)
+        smoke.Color = Color3.new(0.5, 0.5, 0.5)
+        smoke.Opacity = 0.5
+        game.Debris:AddItem(p, 2)
+
+        -- ลบชุดเดิมเรา
+        for _, v in pairs(Character:GetChildren()) do
+            if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") then v:Destroy() end
+        end
+
+        -- ก๊อปปี้ชุดเป้าหมายมาใส่
+        for _, v in pairs(targetPlayer.Character:GetChildren()) do
+            if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") then
+                v:Clone().Parent = Character
+            end
+        end
+        MainFrame.Visible = false
+    end
+end
